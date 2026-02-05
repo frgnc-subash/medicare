@@ -3,58 +3,40 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>medicare</title>
+    <title>Medicare</title>
     <link rel="manifest" href="manifest.json" />
-    <style>
-      body {
-        font-family: sans-serif;
-        background: #f4f4f9;
-        padding: 20px;
-      }
-      .card {
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      }
-      input,
-      button {
-        width: 100%;
-        padding: 10px;
-        margin: 5px 0;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-      }
-      button {
-        background: #2196f3;
-        color: white;
-        border: none;
-        font-weight: bold;
-        cursor: pointer;
-      }
-      .info {
-        font-size: 0.9em;
-        color: #555;
-        margin-top: 10px;
-      }
-    </style>
+    <link rel="stylesheet" href="style.css" />
+    <meta name="theme-color" content="#1a73e8" />
   </head>
   <body>
-    <h2>Medication Reminder</h2>
+    <h2>Medicare</h2>
 
-    <div class="card">
-      <input
-        type="text"
-        id="medName"
-        placeholder="Enter medicine name (e.g. Advil)"
-      />
-      <input type="time" id="remindTime" />
-      <button onclick="addReminder()">Add Reminder & Get Info</button>
+    <div class="card timer-card" id="timerContainer" style="display: none">
+      <div id="timerTitle">Next Dose: <span id="nextMedName">---</span></div>
+      <div id="countdown">00:00:00</div>
     </div>
 
-    <div id="reminderList"></div>
+    <div class="card">
+      <h3>New Reminder</h3>
+      <input type="text" id="medName" placeholder="Medicine Name" />
+      <label>Time from now (Hours)</label>
+      <input
+        type="number"
+        id="hoursDelay"
+        placeholder="e.g. 0.5 for 30 mins"
+        step="0.01"
+      />
+      <label>OR Specific Date/Time</label>
+      <input type="datetime-local" id="exactDateTime" />
+      <button onclick="addReminder()" class="btn-primary">Set Reminder</button>
+      <button onclick="testNotification()" class="btn-test">
+        Send Test Notification (5s)
+      </button>
+    </div>
 
+    <div id="reminderList" style="width: 100%; max-width: 400px"></div>
+
+    <script src="assets/medInfo.js"></script>
     <script src="app.js"></script>
     <script>
       if ("serviceWorker" in navigator) {

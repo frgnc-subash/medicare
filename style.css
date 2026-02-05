@@ -1,0 +1,140 @@
+body {
+  font-family: -apple-system, sans-serif;
+  background: #f0f2f5;
+  padding: 20px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.card {
+  background: white;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+}
+.timer-card {
+  background: linear-gradient(135deg, #1a73e8, #0d47a1);
+  color: white;
+  text-align: center;
+}
+#countdown {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-top: 5px;
+}
+
+.status-badge {
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  float: right;
+}
+.status-due {
+  background: #fff3cd;
+  color: #856404;
+}
+.status-pending {
+  background: #f8d7da;
+  color: #721c24;
+  animation: blink 1s infinite;
+}
+.status-done {
+  background: #d4edda;
+  color: #155724;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+h2,
+h3 {
+  margin-top: 0;
+  color: #1a73e8;
+  text-align: center;
+}
+label {
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: bold;
+  display: block;
+  margin-top: 10px;
+}
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 5px 0;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-primary {
+  background: #1a73e8;
+  color: white;
+  margin-top: 10px;
+}
+.btn-confirm {
+  background: #34a853;
+  color: white;
+  margin-top: 10px;
+}
+.btn-test {
+  background: #6c757d;
+  color: white;
+  margin-top: 5px;
+  font-size: 12px;
+  padding: 8px;
+  opacity: 0.7;
+}
+.del-btn {
+  background: none;
+  color: #dc2626;
+  font-size: 12px;
+  width: auto;
+  padding: 5px;
+  margin-top: 5px;
+}
+
+.med-item {
+  border-left: 6px solid #ccc;
+}
+.med-item.active {
+  border-left-color: #1a73e8;
+}
+.med-item.pending {
+  border-left-color: #dc3545;
+  background: #fff5f5;
+}
+.med-item.completed {
+  border-left-color: #28a745;
+  opacity: 0.7;
+}
+.info {
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: 10px;
+  background: #f8f9fa;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #eee;
+}
