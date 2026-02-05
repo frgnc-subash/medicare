@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>medicare</title>
+    <link rel="manifest" href="manifest.json" />
+    <style>
+      body {
+        font-family: sans-serif;
+        background: #f4f4f9;
+        padding: 20px;
+      }
+      .card {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      input,
+      button {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+      button {
+        background: #2196f3;
+        color: white;
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .info {
+        font-size: 0.9em;
+        color: #555;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Medication Reminder</h2>
+
+    <div class="card">
+      <input
+        type="text"
+        id="medName"
+        placeholder="Enter medicine name (e.g. Advil)"
+      />
+      <input type="time" id="remindTime" />
+      <button onclick="addReminder()">Add Reminder & Get Info</button>
+    </div>
+
+    <div id="reminderList"></div>
+
+    <script src="app.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("sw.js");
+      }
+    </script>
+  </body>
+</html>
