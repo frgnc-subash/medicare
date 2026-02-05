@@ -2,45 +2,91 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>Medicare</title>
-    <link rel="manifest" href="manifest.json" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://cdn-icons-png.flaticon.com/512/822/822143.png"
+    />
     <link rel="stylesheet" href="style.css" />
-    <meta name="theme-color" content="#1a73e8" />
+    <link rel="manifest" href="manifest.json" />
   </head>
   <body>
-    <h2>Medicare</h2>
-
-    <div class="card timer-card" id="timerContainer" style="display: none">
-      <div id="timerTitle">Next Dose: <span id="nextMedName">---</span></div>
-      <div id="countdown">00:00:00</div>
+    <div id="app-container">
+      <div class="header-bar">
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/822/822143.png"
+          alt="logo"
+          class="nav-logo"
+        />
+        <h1 class="nav-title">Medicare</h1>
+      </div>
+      <div class="card timer-display" id="timerContainer" style="display: none">
+        <div class="timer-sub" id="timerTitle">Next Dose</div>
+        <div id="countdown">00:00:00</div>
+      </div>
+      <div class="card">
+        <label>Medicine Name</label>
+        <input
+          type="text"
+          id="medName"
+          placeholder="e.g. Advil"
+          oninput="updatePreview()"
+        />
+        <div class="tab-container">
+          <div class="tab active" id="tabRel" onclick="switchMode('rel')">
+            Relative
+          </div>
+          <div class="tab" id="tabAbs" onclick="switchMode('abs')">
+            Absolute
+          </div>
+        </div>
+        <div id="modeRel">
+          <label>Adjust Hours</label>
+          <div class="stepper-container">
+            <button class="step-btn" onclick="adjustHours(-1)">-1h</button>
+            <button class="step-btn" onclick="adjustHours(-0.5)">-30m</button>
+            <input
+              type="number"
+              id="hoursDelay"
+              placeholder="0"
+              step="0.1"
+              oninput="updatePreview()"
+            />
+            <button class="step-btn" onclick="adjustHours(0.5)">+30m</button>
+            <button class="step-btn" onclick="adjustHours(1)">+1h</button>
+          </div>
+          <div class="chip-container">
+            <div class="chip" onclick="setQuickTime(4)">4h</div>
+            <div class="chip" onclick="setQuickTime(8)">8h</div>
+            <div class="chip" onclick="setQuickTime(12)">12h</div>
+          </div>
+        </div>
+        <div id="modeAbs" style="display: none">
+          <div class="abs-grid">
+            <label>Select Date</label>
+            <input type="date" id="absDate" oninput="updatePreview()" />
+            <label>Select Time</label>
+            <input type="time" id="absTime" oninput="updatePreview()" />
+          </div>
+        </div>
+        <div id="timePreview" class="time-preview">Set a valid time</div>
+        <button onclick="addReminder()" class="btn-black">Add Reminder</button>
+      </div>
+      <div class="list-title">Schedule</div>
+      <div id="reminderList"></div>
     </div>
-
-    <div class="card">
-      <h3>New Reminder</h3>
-      <input type="text" id="medName" placeholder="Medicine Name" />
-      <label>Time from now (Hours)</label>
-      <input
-        type="number"
-        id="hoursDelay"
-        placeholder="e.g. 0.5 for 30 mins"
-        step="0.01"
-      />
-      <label>OR Specific Date/Time</label>
-      <input type="datetime-local" id="exactDateTime" />
-      <button onclick="addReminder()" class="btn-primary">Set Reminder</button>
-      <button onclick="testNotification()" class="btn-test">
-        Send Test Notification (5s)
-      </button>
-    </div>
-
-    <div id="reminderList" style="width: 100%; max-width: 400px"></div>
-
     <script src="assets/medInfo.js"></script>
     <script src="app.js"></script>
     <script>
       if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("sw.js");
+        navigator.serviceWorker.register("sw.js").then((reg) => {
+          reg.onupdatefound = () => location.reload();
+        });
       }
     </script>
   </body>
