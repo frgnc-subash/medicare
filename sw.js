@@ -1,4 +1,4 @@
-const CACHE_NAME = "medicare-v13";
+const CACHE_NAME = "medicare-v21";
 self.addEventListener("install", (e) => self.skipWaiting());
 self.addEventListener("activate", (e) => {
   e.waitUntil(

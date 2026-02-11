@@ -1,5 +1,10 @@
 let reminders = JSON.parse(localStorage.getItem("meds")) || [];
-let currentMode = "rel";
+let currentMode = "rel",
+  relHours = 0.5,
+  showHistory = false,
+  audioUnlocked = false;
+const alarm = new Audio();
+alarm.loop = true;
 
 window.onload = () => {
   const now = new Date();
@@ -7,6 +12,20 @@ window.onload = () => {
   document.getElementById("absTime").value = now.toTimeString().slice(0, 5);
   render();
 };
+
+function unlockAudio() {
+  if (audioUnlocked) return;
+  alarm.src =
+    "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+  alarm
+    .play()
+    .then(() => {
+      alarm.pause();
+      audioUnlocked = true;
+      document.getElementById("statusDot").style.background = "#00e676";
+    })
+    .catch(() => {});
+}
 
 function switchMode(mode) {
   currentMode = mode;
@@ -16,59 +35,53 @@ function switchMode(mode) {
     mode === "abs" ? "block" : "none";
   document.getElementById("tabRel").classList.toggle("active", mode === "rel");
   document.getElementById("tabAbs").classList.toggle("active", mode === "abs");
-  updatePreview();
 }
 
 function adjustHours(amount) {
-  const el = document.getElementById("hoursDelay");
-  let val = parseFloat(el.value) || 0;
-  el.value = Math.max(0, val + amount);
-  updatePreview();
+  relHours = Math.max(0.5, relHours + amount);
+  document.getElementById("hrDisplay").innerText = relHours;
 }
 
-function setQuickTime(h) {
-  document.getElementById("hoursDelay").value = h;
-  updatePreview();
-}
-
-function getCalculatedTarget() {
-  if (currentMode === "rel") {
-    const h = parseFloat(document.getElementById("hoursDelay").value);
-    return h && h > 0 ? Date.now() + h * 3600000 : null;
-  } else {
-    const d = document.getElementById("absDate").value;
-    const t = document.getElementById("absTime").value;
-    return d && t ? new Date(`${d}T${t}`).getTime() : null;
-  }
-}
-
-function updatePreview() {
-  const target = getCalculatedTarget();
-  const preview = document.getElementById("timePreview");
-  if (target && target > Date.now()) {
-    const d = new Date(target);
-    preview.innerText = `Remind at: ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} (${d.toLocaleDateString([], { month: "short", day: "numeric" })})`;
-  } else {
-    preview.innerText = "Set a valid future time";
-  }
+function previewSound() {
+  if (!audioUnlocked) unlockAudio();
+  alarm.src = `assets/sounds/${document.getElementById("soundSelect").value}.mp3`;
+  alarm.loop = false;
+  alarm.play().catch(() => {});
+  setTimeout(() => {
+    if (!alarm.loop) alarm.pause();
+  }, 2000);
 }
 
 function addReminder() {
-  const nameEl = document.getElementById("medName");
-  const targetTime = getCalculatedTarget();
-  if (!nameEl.value || !targetTime || targetTime <= Date.now()) return;
-  const fmtName =
-    nameEl.value.charAt(0).toUpperCase() + nameEl.value.slice(1).toLowerCase();
+  const nameInput = document.getElementById("medName").value.trim();
+  if (!nameInput) return;
+  let targetTime;
+  if (currentMode === "rel") {
+    targetTime = Date.now() + relHours * 3600000;
+  } else {
+    const d = document.getElementById("absDate").value,
+      t = document.getElementById("absTime").value;
+    if (!d || !t) return;
+    targetTime = new Date(`${d}T${t}`).getTime();
+  }
+  if (targetTime <= Date.now()) return alert("Select future time");
+  let info = "";
+  if (typeof medDatabase !== "undefined") {
+    const key = Object.keys(medDatabase).find(
+      (k) => k.toLowerCase() === nameInput.toLowerCase(),
+    );
+    info = key ? medDatabase[key] : "";
+  }
   reminders.push({
     id: Date.now(),
-    name: fmtName,
+    name: nameInput,
     targetTime,
-    info: typeof medDatabase !== "undefined" ? medDatabase[fmtName] || "" : "",
+    sound: document.getElementById("soundSelect").value,
+    info,
     status: "active",
     notified: false,
   });
-  nameEl.value = "";
-  document.getElementById("hoursDelay").value = "";
+  document.getElementById("medName").value = "";
   save();
 }
 
@@ -77,66 +90,77 @@ function save() {
   render();
 }
 
-function complete(id) {
+function toggleHistory() {
+  showHistory = !showHistory;
+  document.getElementById("historyLabel").innerText = showHistory
+    ? "Hide History"
+    : "Show History";
+  render();
+}
+
+function clearHistory() {
+  if (confirm("Delete all history logs?")) {
+    reminders = reminders.filter((m) => m.status !== "completed");
+    save();
+  }
+}
+
+function render() {
+  const list = document.getElementById("reminderList"),
+    search = document.getElementById("searchInput").value.toLowerCase(),
+    clearBtn = document.getElementById("clearBtn");
+  list.innerHTML = "";
+  let filtered = reminders.filter((m) => m.name.toLowerCase().includes(search));
+  const historyExists = reminders.some((m) => m.status === "completed");
+  clearBtn.style.display = showHistory && historyExists ? "block" : "none";
+  if (!showHistory) filtered = filtered.filter((m) => m.status !== "completed");
+  filtered
+    .sort((a, b) => {
+      if (a.status === "pending") return -1;
+      if (b.status === "pending") return 1;
+      if (a.status === "completed") return 1;
+      if (b.status === "completed") return -1;
+      return a.targetTime - b.targetTime;
+    })
+    .forEach((m) => {
+      const d = new Date(m.targetTime);
+      const div = document.createElement("div");
+      div.className = `med-item ${m.status}`;
+      div.innerHTML = `<div class="med-content"><div class="med-header"><span class="med-name">${m.name}</span><span class="status-tag">${m.status}</span></div><div style="font-size:12px;color:var(--text-variant);">${d.toLocaleDateString()} • ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>${m.info ? `<div style="font-size:13px;color:var(--text-variant);margin-top:8px;border-top:1px solid var(--outline);padding-top:8px">${m.info}</div>` : ""}${m.status === "pending" ? `<button class="action-btn" onclick="confirmTake(${m.id})">Mark as Taken</button>` : ""}<div class="del-link" onclick="remove(${m.id})">Delete</div></div>`;
+      list.appendChild(div);
+    });
+}
+
+function confirmTake(id) {
   const m = reminders.find((r) => r.id === id);
   if (m) m.status = "completed";
+  alarm.pause();
   save();
 }
 
 function remove(id) {
   reminders = reminders.filter((r) => r.id !== id);
+  if (!reminders.some((m) => m.status === "pending")) alarm.pause();
   save();
 }
 
-function render() {
-  const list = document.getElementById("reminderList");
-  list.innerHTML = "";
-  if (reminders.length === 0) {
-    list.innerHTML = `<div style="text-align:center; padding:40px; color:var(--gray-light); font-size:13px;">No medications scheduled</div>`;
-    return;
-  }
-  const sorted = [...reminders].sort((a, b) => {
-    if (a.status === "pending" && b.status !== "pending") return -1;
-    if (a.status !== "pending" && b.status === "pending") return 1;
-    if (a.status === "active" && b.status === "active")
-      return a.targetTime - b.targetTime;
-    if (a.status === "completed" && b.status !== "completed") return 1;
-    if (a.status !== "completed" && b.status === "completed") return -1;
-    return a.targetTime - b.targetTime;
-  });
-  sorted.forEach((m) => {
-    const d = new Date(m.targetTime);
-    const isPending = m.status === "pending";
-    const isDone = m.status === "completed";
-    list.innerHTML += `
-            <div class="card med-item" style="${isDone ? "opacity:0.3" : ""}; border-left: 4px solid ${isPending ? "var(--red)" : isDone ? "var(--gray-border)" : "var(--blue)"}">
-                <div class="med-header">
-                    <span class="med-name">${m.name}</span>
-                    <span class="status-tag ${isPending ? "tag-pending" : ""}">${m.status}</span>
-                </div>
-                <div style="font-size:12px; color:var(--gray-light)">
-                    ${d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })} at ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </div>
-                ${m.info ? `<div class="info-box">${m.info}</div>` : ""}
-                ${isPending ? `<button class="btn-outline" onclick="complete(${m.id})">Mark as Taken</button>` : ""}
-                <button class="del-link" onclick="remove(${m.id})">Delete</button>
-            </div>`;
-  });
-}
-
 function updateTimer() {
-  const container = document.getElementById("timerContainer");
-  const pending = reminders.filter((m) => m.status === "pending");
-  const active = reminders
-    .filter((m) => m.status === "active")
-    .sort((a, b) => a.targetTime - b.targetTime);
+  const container = document.getElementById("timerContainer"),
+    pending = reminders.filter((m) => m.status === "pending"),
+    active = reminders
+      .filter((m) => m.status === "active")
+      .sort((a, b) => a.targetTime - b.targetTime);
   if (pending.length > 0) {
     container.style.display = "block";
-    container.style.borderColor = "var(--red)";
-    document.getElementById("timerTitle").innerText =
-      `Overdue: ${pending[0].name}`;
-    document.getElementById("countdown").innerText = "NOW";
-    document.getElementById("countdown").style.color = "var(--red)";
+    container.style.borderColor = "var(--error)";
+    document.getElementById("timerTitle").innerText = "OVERDUE";
+    document.getElementById("countdown").innerText = "TAKE NOW";
+    document.getElementById("countdown").style.color = "var(--error)";
+    if (audioUnlocked && alarm.paused) {
+      alarm.src = `assets/sounds/${pending[0].sound}.mp3`;
+      alarm.loop = true;
+      alarm.play().catch(() => {});
+    }
     return;
   }
   if (active.length === 0) {
@@ -145,36 +169,28 @@ function updateTimer() {
   }
   const diff = active[0].targetTime - Date.now();
   container.style.display = "block";
-  container.style.borderColor = "var(--gray-border)";
-  document.getElementById("countdown").style.color = "var(--white)";
-  document.getElementById("timerTitle").innerHTML = `Next: ${active[0].name}`;
+  document.getElementById("countdown").style.color = "var(--primary)";
+  document.getElementById("timerTitle").innerText = "NEXT: " + active[0].name;
   const h = Math.floor(diff / 3600000),
     m = Math.floor((diff % 3600000) / 60000),
     s = Math.floor((diff % 60000) / 1000);
   document.getElementById("countdown").innerText =
-    `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-}
-
-function checkMeds() {
-  const now = Date.now();
-  let updated = false;
-  reminders.forEach((m) => {
-    if (m.status === "active" && now >= m.targetTime) {
-      m.status = "pending";
-      if (!m.notified) {
-        if ("Notification" in window && Notification.permission === "granted")
-          new Notification("Medicare", { body: `Take ${m.name}` });
-        m.notified = true;
-      }
-      updated = true;
-    }
-  });
-  if (updated) save();
+    `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
 setInterval(() => {
   updateTimer();
-  checkMeds();
+  const now = Date.now();
+  reminders.forEach((m) => {
+    if (m.status === "active" && now >= m.targetTime) {
+      m.status = "pending";
+      save();
+      if ("Notification" in window && Notification.permission === "granted")
+        new Notification("Medicare", {
+          body: `Take ${m.name}`,
+          icon: "https://cdn-icons-png.flaticon.com/512/822/822143.png",
+        });
+    }
+  });
 }, 1000);
-if ("Notification" in window && Notification.permission !== "denied")
-  Notification.requestPermission();
+if ("Notification" in window) Notification.requestPermission();
